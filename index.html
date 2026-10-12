@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TouchGrass AI | Your Offline Adventure</title>
+<style>
+:root {
+  --green: #236b45;
+  --light: #eaf5e9;
+  --cream: #faf9f1;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--cream);
+  color: #203c2b;
+}
+header {
+  padding: 22px 8%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  border-bottom: 1px solid #e3eadf;
+}
+.logo { font-size: 22px; font-weight: bold; color: var(--green); }
+.tag { color: #65806c; font-size: 13px; }
+.hero {
+  text-align: center;
+  padding: 65px 20px 45px;
+  background: linear-gradient(135deg, #e4f2df, #f8f4df);
+}
+.emoji { font-size: 48px; }
+h1 { font-size: clamp(34px, 6vw, 55px); margin: 15px 0; }
+h1 span { color: var(--green); }
+.hero p { font-size: 17px; line-height: 1.7; color: #58705c; }
+main { max-width: 950px; margin: 35px auto; padding: 0 20px; }
+.panel {
+  background: white;
+  padding: 28px;
+  border-radius: 20px;
+  box-shadow: 0 8px 30px #244b2110;
+  margin-bottom: 24px;
+}
+h2 { margin-top: 0; }
+.choices { display: flex; gap: 12px; flex-wrap: wrap; }
+.choice {
+  padding: 12px 22px;
+  border: 1px solid #cadbc8;
+  background: white;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 15px;
+}
+.choice.selected { background: var(--green); color: white; }
+.activities {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+.activity {
+  padding: 22px;
+  background: var(--light);
+  border-radius: 16px;
+}
+.activity .icon { font-size: 30px; }
+.activity h3 { margin-bottom: 8px; }
+.activity p { color: #58705c; line-height: 1.5; }
+button.primary {
+  background: var(--green);
+  color: white;
+  padding: 14px 22px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+button.primary:hover { background: #174d31; }
+button:focus-visible { outline: 3px solid #e5a94e; }
+.status { margin-top: 18px; line-height: 1.6; }
+.stats { display: flex; gap: 18px; flex-wrap: wrap; }
+.stat { flex: 1; min-width: 130px; background: #f2f7ed; padding: 20px; border-radius: 14px; }
+.stat strong { display: block; font-size: 28px; color: var(--green); }
+footer { text-align: center; padding: 30px; color: #65806c; }
+@media(max-width: 600px) {
+  header { padding: 18px; }
+  .hero { padding-top: 45px; }
+  .panel { padding: 20px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🌿 TouchGrass AI</div>
+  <div class="tag">Less scrolling. More living.</div>
+</header>
+
+<section class="hero">
+  <div class="emoji">🌳 ☀️ 🌼</div>
+  <h1>Your next adventure<br>starts <span>outside.</span></h1>
+  <p>A little fresh air can change your day.<br>
+  Choose your time and discover a simple offline adventure.</p>
+</section>
+
+<main>
+  <section class="panel">
+    <h2>🍃 Plan your outdoor break</h2>
+    <p>How much time can you spend outside?</p>
+    <div class="choices" id="choices">
+      <button class="choice selected" data-min="10">10 minutes</button>
+      <button class="choice" data-min="20">20 minutes</button>
+      <button class="choice" data-min="30">30 minutes</button>
+    </div>
+    <br>
+    <button class="primary" id="generate">Discover my adventure →</button>
+  </section>
+
+  <section class="panel">
+    <h2 id="activityTitle">Your nature-inspired ideas</h2>
+    <div class="activities" id="activities"></div>
+    <div class="status" id="status" aria-live="polite">
+      Pick your time and discover your next adventure.
+    </div>
+    <br>
+    <button class="primary" id="start">Start my adventure 🌱</button>
+    <button class="primary" id="complete" hidden>Mark as completed ✓</button>
+  </section>
+
+  <section class="panel">
+    <h2>🌻 Your progress</h2>
+    <div class="stats">
+      <div class="stat"><strong id="count">0</strong>Adventures completed</div>
+      <div class="stat"><strong id="minutes">0</strong>Minutes outdoors</div>
+    </div>
+    <p>Your progress stays saved on this device.</p>
+  </section>
+</main>
+
+<footer>Made with 🌿 for a healthier, more connected world.</footer>
+
+<script>
+const ideas = [
+  { icon: "🚶", title: "Mindful Walk", text: "Walk at a comfortable pace. Notice the sky, trees and sounds around you." },
+  { icon: "🌼", title: "Nature Detective", text: "Find three different leaves, listen for birds, or notice tiny details in nature." },
+  { icon: "🧘", title: "Fresh-Air Reset", text: "Stretch gently outdoors, breathe slowly and give your eyes a screen-free break." },
+  { icon: "📸", title: "Colour Hunt", text: "Look for five different colours in the natural world without taking out your phone." },
+  { icon: "🌳", title: "Quiet Moment", text: "Sit somewhere safe, relax your shoulders and observe the world around you." },
+  { icon: "👟", title: "Explore Nearby", text: "Discover a safe nearby path or park you have never explored before." }
+];
+
+let selectedMinutes = 10;
+let currentActivity = null;
+let timer = null;
+let secondsLeft = 0;
+
+const $ = id => document.getElementById(id);
+const saved = JSON.parse(localStorage.getItem("touchgrass-progress") || '{"count":0,"minutes":0}');
+let progress = {
+  count: Number(saved.count) || 0,
+  minutes: Number(saved.minutes) || 0
+};
+
+function updateProgress() {
+  $("count").textContent = progress.count;
+  $("minutes").textContent = progress.minutes;
+  localStorage.setItem("touchgrass-progress", JSON.stringify(progress));
+}
+
+function showIdeas() {
+  const shuffled = [...ideas].sort(() => Math.random() - 0.5);
+  $("activities").innerHTML = shuffled.slice(0, 3).map((idea, i) => `
+    <article class="activity">
+      <div class="icon">${idea.icon}</div>
+      <h3>${idea.title}</h3>
+      <p>${idea.text}</p>
+      <button class="choice" data-activity="${i}">Choose this</button>
+    </article>
+  `).join("");
+
+  const shown = shuffled.slice(0, 3);
+  $("activities").querySelectorAll("[data-activity]").forEach((button, i) => {
+    button.addEventListener("click", () => {
+      currentActivity = shown[i];
+      $("activityTitle").textContent = "Your adventure: " + currentActivity.title;
+      $("status").textContent = "You've chosen " + currentActivity.title + ". Press Start when you're ready.";
+      $("activities").querySelectorAll("[data-activity]").forEach(b => b.classList.remove("selected"));
+      button.classList.add("selected");
+    });
+  });
+
+  currentActivity = shown[0];
+  $("activityTitle").textContent = "Your nature-inspired ideas";
+  $("status").textContent = "Choose an idea, then start your outdoor adventure.";
+  $("complete").hidden = true;
+}
+
+$("choices").querySelectorAll("[data-min]").forEach(button => {
+  button.addEventListener("click", () => {
+    selectedMinutes = Number(button.dataset.min);
+    $("choices").querySelectorAll("[data-min]").forEach(b => b.classList.remove("selected"));
+    button.classList.add("selected");
+  });
+});
+
+$("generate").addEventListener("click", async () => {
+  $("status").textContent = "🌿 Asking your local AI...";
+  $("generate").disabled = true;
+
+  try {
+    const response = await fetch("/api/activities", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ minutes: selectedMinutes })
+    });
+
+    if (!response.ok) throw new Error("AI request failed");
+
+    const data = await response.json();
+    const suggestions = data.activities.split("\n").filter(line => line.trim()).slice(0, 3);
+
+    $("activityTitle").textContent = "Your AI-generated adventures";
+    $("activities").innerHTML = "";
+
+    suggestions.forEach((suggestion, index) => {
+      const card = document.createElement("article");
+      card.className = "activity";
+
+      const title = document.createElement("h3");
+      title.textContent = "🌱 Adventure " + (index + 1);
+
+      const description = document.createElement("p");
+      description.textContent = suggestion.replace(/^\s*[-*\d.)]+\s*/, "");
+
+      const choose = document.createElement("button");
+      choose.className = "choice";
+      choose.textContent = "Choose this";
+
+      choose.addEventListener("click", () => {
+        currentActivity = { title: "Adventure " + (index + 1), text: description.textContent };
+        $("status").textContent = "Adventure selected! Press Start when ready.";
+        $("activities").querySelectorAll(".choice").forEach(b => b.classList.remove("selected"));
+        choose.classList.add("selected");
+      });
+
+      card.append(title, description, choose);
+      $("activities").appendChild(card);
+    });
+
+    if (!suggestions.length) throw new Error("No suggestions returned");
+
+    currentActivity = { title: "Your AI adventure", text: suggestions[0] };
+    $("status").textContent = "Your local AI generated these ideas. Choose one to begin!";
+    $("complete").hidden = true;
+  } catch (error) {
+    $("status").textContent = "AI connection failed. Check that Ollama and the backend are running.";
+  } finally {
+    $("generate").disabled = false;
+  }
+});
+
+$("start").addEventListener("click", () => {
+  if (timer) clearInterval(timer);
+  secondsLeft = selectedMinutes * 60;
+  $("start").hidden = true;
+  $("complete").hidden = false;
+  $("status").textContent = "🌿 " + currentActivity.title + " — " + formatTime(secondsLeft) + " remaining. Head outdoors when it's safe!";
+  timer = setInterval(() => {
+    secondsLeft--;
+    if (secondsLeft <= 0) {
+      clearInterval(timer);
+      timer = null;
+      $("status").textContent = "Time is up! If you've completed your outdoor break, mark it complete.";
+    } else {
+      $("status").textContent = "🌿 " + currentActivity.title + " — " + formatTime(secondsLeft) + " remaining. Enjoy the fresh air!";
+    }
+  }, 1000);
+});
+
+function formatTime(s) {
+  return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+}
+
+$("complete").addEventListener("click", () => {
+  if (timer) clearInterval(timer);
+  timer = null;
+  progress.count++;
+  progress.minutes += selectedMinutes;
+  updateProgress();
+  $("start").hidden = false;
+  $("complete").hidden = true;
+  $("status").textContent = "🎉 Adventure completed! Great job making time for the real world.";
+});
+
+updateProgress();
+showIdeas();
+</script>
+</body>
+</html>
