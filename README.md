@@ -1,6 +1,9 @@
-# 🌿 TouchGrass AI
+# 🌿 TouchGrassAI
 
-**Less scrolling. More living.** TouchGrass AI helps you step away from the
+An AI-powered app that encourages students to take breaks from screens and
+explore outdoor activities.
+
+**Less scrolling. More living.** TouchGrassAI helps you step away from the
 screen and discover a simple, safe outdoor adventure — powered by a local AI
 model, so it works fully offline.
 
